@@ -6,8 +6,6 @@ name: Webhook workflow
 # or API.
 on:
   repository_dispatch:
-      types:
-        - webhook
         
   workflow_dispatch:
     # Inputs the workflow accepts.
