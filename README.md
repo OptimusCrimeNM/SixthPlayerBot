@@ -1,4 +1,4 @@
-Worker instance is hosted on cloud flare instances
+Worker instance is hosted on cloud flare free workers
 
 Requires telegram bot, that has webhook updates installed as described here https://core.telegram.org/bots/api#setwebhook
 
