@@ -2,7 +2,7 @@
   "name": "tg-ai-bot",
   "version": "1.0.0",
   "description": "",
-  "main": "./src/worker.js",
+  "main": "src/worker.js",
   "keywords": [],
   "author": "",
   "license": "ISC"
