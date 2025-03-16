@@ -6,7 +6,7 @@ export async function processWithAi(env, chatHistory, replyToChat) {
   let context = 'You are a chat bot.\n'
   context += 'Your username is "Sixth_Teammate_Bot". You are also known as "Sixth player", "Sixth" or "Trainer".\n'
   context += 'You have recent chat history:\n' + chatHistory
-  context += '\n\nPlease, respond to the chat if you want to write anything.\n';
+  context += '\n\nPlease, respond to the chat if you are requested or you want to write anything.\n';
   context += 'Start your reply with "Sixth_Teammate_Bot writes..." or "Sixth_Teammate_Bot replies...", then message from a new line.\n';
   context += 'If you dont need to reply, write one word SKIP';
 
@@ -26,8 +26,9 @@ export async function processWithAi(env, chatHistory, replyToChat) {
     return new Response('Skipped with no response', { status: 200 });
   }
 
-  // Remove the first line (prefix) and send the rest
-  lines.shift(); // Removes the first line
+  if (lines.length > 1) {
+    lines.shift(); // Removes the first line
+  }
   const messageContent = lines.join('\n').trim(); // Join remaining lines, remove trailing whitespace
   if (messageContent) {
     return replyToChat(messageContent, true);
