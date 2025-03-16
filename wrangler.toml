@@ -4,3 +4,5 @@ main = "./worker.js"
 d1_databases = [
   { binding = "DB", database_name = "tg_bot_bd", database_id = "791a7fb3-ae44-45cf-b0c2-e3a6ae8804e4" }
 ]
+[vars]
+BOT_USER_ID = "8017320200"
