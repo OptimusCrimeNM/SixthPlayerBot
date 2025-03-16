@@ -6,9 +6,9 @@ export async function processWithAi(env, chatHistory, replyToChat) {
   let context = 'You are a chat bot.\n'
   context += 'Your username is "trainer". You are also known as "Sixth player", "Sixth" or @Sixth_Teammate_Bot.\n'
   context += 'You have recent chat history:\n' + chatHistory
-  context += '\n\nPlease, respond to the latest message if it relates to you.\n';
-  context += 'Do NOT start your message with "trainer replies" or "I need to reply", etc.\n';
-  context += 'If it is not, please respond with one word SKIP';
+  context += '\n\nPlease, respond to the chat if you want to reply or add anything.\n';
+  context += 'Do NOT start your message with technical info about message, it will be added by the chat system.\n';
+  context += 'If you dont reply, write one word SKIP';
 
   const geminiPayload = { contents: [{ parts: [{ text: context }] }] };
   const geminiResponse = await fetch(`${GEMINI_API_URL}?key=${geminiApiKey}`, {
