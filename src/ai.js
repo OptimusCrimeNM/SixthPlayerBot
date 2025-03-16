@@ -1,14 +1,32 @@
-import { GEMINI_API_URL } from './constants.js';
+import {GEMINI_API_URL, TELEGRAM_API_BASE_URL} from './constants.js';
 
-export async function processWithAi(env, chatHistory, replyToChat) {
+export async function getChatMemberCount(env, chatId) {
+  const botToken = env.TELEGRAM_BOT_TOKEN;
+  const url = `${TELEGRAM_API_BASE_URL}${botToken}/getChatMemberCount?chat_id=${chatId}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+  });
+
+  if (!response.ok) {
+    return undefined;
+  }
+
+  const data = await response.json();
+  return data.result; // Returns the integer count
+}
+
+export async function processWithAi(env, chatHistory, chatId, replyToChat) {
   const geminiApiKey = env.GEMINI_API_KEY;
 
-  let context = 'You are a chat bot.\n'
-  context += 'Your username is "trainer". You are also known as "Sixth player", "Sixth" or "Sixth_Teammate_Bot".\n'
-  context += 'You have recent chat history:\n' + chatHistory
-  context += '\n\nPlease, respond to the chat if you were requested directly or you want to write anything.\n';
-  context += 'Start your message with "trainer writes" or "trainer replies", then text from a new line.\n';
-  context += 'If you dont need to respond, write one word SKIP';
+  let context = 'You are a participants in a text chat.\n'
+  const usersCount = await getChatMemberCount(env, chatId)
+  if (usersCount) context += `There's ${usersCount} users in the chat.\n`
+  if (env.BOT_USERNAME) context += `Your username is "${env.BOT_USERNAME}".\n`
+  context += `You are also known as "Sixth player", "Sixth" or "Sixth_Teammate_Bot".\n`
+  context += 'You have recent chat history:\n' + chatHistory + '\n\n'
+  const scriptValue = await env.KV.get("AI_REQUEST_SCRIPT");
+  if (scriptValue) context += scriptValue
 
   const geminiPayload = { contents: [{ parts: [{ text: context }] }] };
   const geminiResponse = await fetch(`${GEMINI_API_URL}?key=${geminiApiKey}`, {

@@ -4,5 +4,9 @@ main = "./src/worker.js"
 d1_databases = [
   { binding = "DB", database_name = "tg_bot_bd", database_id = "791a7fb3-ae44-45cf-b0c2-e3a6ae8804e4" }
 ]
+kv_namespaces = [
+  { binding = "KV", id = "4c07daf9a6a247ca8e86b03257142b76" }
+]
 [vars]
 BOT_USER_ID = "8017320200"
+BOT_USERNAME = "trainer"
