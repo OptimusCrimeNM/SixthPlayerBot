@@ -5,6 +5,5 @@
   "main": "worker.js",
   "keywords": [],
   "author": "",
-  "license": "ISC",
-  "compatibility_date":"2025-03-16"
+  "license": "ISC"
 }
