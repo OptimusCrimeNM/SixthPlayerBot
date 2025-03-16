@@ -51,7 +51,7 @@ export default {
         }
 
         const sentMessage = await replyRequest.json();
-        if (sentMessage && sentMessage.ok && sentMessage.result) {
+        if (storeReply && sentMessage && sentMessage.ok && sentMessage.result) {
           await parseAndStoreMessage(env, sentMessage.result);
         }
 
