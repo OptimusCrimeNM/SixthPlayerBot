@@ -8,5 +8,4 @@ kv_namespaces = [
   { binding = "KV", id = "4c07daf9a6a247ca8e86b03257142b76" }
 ]
 [vars]
-BOT_USER_ID = "8017320200"
 BOT_USERNAME = "trainer"
