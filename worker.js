@@ -85,6 +85,7 @@ export default {
       return new Response('OK', { status: 200 });
 
     } catch (error) {
+      console.error(`Error: ${error.message}`);
       return new Response(`Error: ${error.message}`, { status: 500 });
     }
   },
