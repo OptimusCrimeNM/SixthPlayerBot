@@ -1,4 +1,5 @@
 import {GEMINI_API_URL, TELEGRAM_API_BASE_URL} from './constants.js';
+import {addMemoryEntries, getChatHistory, getChatMemory, removeMemoryEntries} from "./storage";
 
 export async function getChatMemberCount(env, chatId) {
     const botToken = env.TELEGRAM_BOT_TOKEN;
@@ -16,15 +17,19 @@ export async function getChatMemberCount(env, chatId) {
     return data.result; // Returns the integer count
 }
 
-export async function processWithAi(env, chatHistory, chatId, replyToChat) {
+export async function processWithAi(env, chatId, replyToChat) {
     const geminiApiKey = env.GEMINI_API_KEY;
 
+    const chatHistory = await getChatHistory(env, String(chatId));
+    const rememberedContext = await getChatMemory(env, String(chatId));
     let context = 'You are a participants in a text chat.\n'
     const usersCount = await getChatMemberCount(env, chatId)
     if (usersCount) context += `There's ${usersCount} users in the chat.\n`
     if (env.BOT_USERNAME) context += `Your username is "${env.BOT_USERNAME}".\n`
     context += `You are also known as "Sixth player", "Sixth" or "Sixth_Teammate_Bot".\n`
-    context += 'You have recent chat history:\n' + chatHistory + '\n\n'
+    if (rememberedContext) context += 'You have notes of important facts you made:\n' + rememberedContext + '\n\n'
+    if (chatHistory) context += 'You have recent chat history:\n' + chatHistory + '\n\n'
+
     const scriptValue = await env.KV.get("AI_REQUEST_SCRIPT");
     if (scriptValue) context += scriptValue
 
@@ -39,17 +44,18 @@ export async function processWithAi(env, chatHistory, chatId, replyToChat) {
     const geminiData = await geminiResponse.json();
     const geminiReplyText = geminiData.candidates[0].content.parts[0].text;
     const lines = geminiReplyText.split('\n');
+    lines.shift();
+    lines.pop();
 
-    if (lines.length === 0 || lines[0].includes("SKIP")) {
-        return new Response('Skipped with no response', {status: 200});
-    }
-
-    if (lines.length > 1) {
-        lines.shift(); // Removes the first line
-    }
-    const messageContent = lines.join('\n').trim(); // Join remaining lines, remove trailing whitespace
-    if (messageContent) {
-        return replyToChat(messageContent, true);
+    try {
+        const replyObject = JSON.parse(lines.join('\n').trim())
+        if (replyObject.remove_note) await removeMemoryEntries(env, chatId, replyObject.remove_note);
+        if (replyObject.add_note) await addMemoryEntries(env, chatId, replyObject.add_note);
+        if (replyObject.message) return replyToChat(replyObject.message, true);
+    } catch (error) {
+        console.error(`Wrong ai reply format: ${error.message}`);
+        return new Response('Wrong ai reply format', {status: 200});
     }
     return new Response('No content to reply', {status: 200});
 }
+

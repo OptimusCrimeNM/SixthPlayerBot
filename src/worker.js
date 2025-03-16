@@ -76,8 +76,7 @@ export default {
 
         const enabledChatting = chatStatus ? chatStatus.enabled : false;
         if (enabledChatting && (await parseAndStoreMessage(env, message))) {
-          const chatHistory = await getChatHistory(env, String(chatId));
-          return processWithAi(env, chatHistory, chatId, replyToChat);
+          return processWithAi(env, chatId, replyToChat);
         }
       } else if (chatType === 'private') {
         return replyToChat(UNAUTHORIZED_MESSAGE);

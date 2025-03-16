@@ -76,3 +76,57 @@ export async function getChatHistory(env, chatId, maxChars = MAX_CHAT_HISTORY_CH
         return "";
     }
 }
+
+export async function getChatMemory(env, chatId) {
+    try {
+        const {results} = await env.DB.prepare(`
+            SELECT id, context_value
+            FROM remembered_context
+            WHERE chat_id = ?
+            ORDER BY id ASC
+        `).bind(chatId).all();
+
+        if (!results || results.length === 0) return "";
+
+        // Format memory entries with their note numbers
+        const memoryLines = results.map(row => `${row.id}. ${row.context_value}`);
+        return memoryLines.join('\n');
+    } catch (error) {
+        console.error(`Error fetching chat memory for chat ${chatId}: ${error.message}`);
+        return "";
+    }
+}
+
+export async function removeMemoryEntries(env, chatId, entryNumbers) {
+    if (!Array.isArray(entryNumbers) || entryNumbers.length === 0) return;
+
+    try {
+        const placeholders = entryNumbers.map(() => '?').join(',');
+        await env.DB.prepare(`
+            DELETE
+            FROM remembered_context
+            WHERE chat_id = ?
+              AND id IN (${placeholders})
+        `).bind(chatId, ...entryNumbers).run();
+    } catch (error) {
+        console.error(`Error removing memory entries for chat ${chatId}: ${error.message}`);
+    }
+}
+
+export async function addMemoryEntries(env, chatId, entries) {
+    if (!Array.isArray(entries) || entries.length === 0) return;
+
+    try {
+        const stmt = env.DB.prepare(`
+            INSERT INTO remembered_context (chat_id, context_value)
+            VALUES (?, ?)
+        `);
+        for (const entry of entries) {
+            if (typeof entry === 'string' && entry.trim()) {
+                await stmt.bind(chatId, entry.trim()).run();
+            }
+        }
+    } catch (error) {
+        console.error(`Error adding memory entries for chat ${chatId}: ${error.message}`);
+    }
+}
