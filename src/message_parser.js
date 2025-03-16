@@ -1,7 +1,7 @@
 export async function parseAndStoreMessage(env, message) {
     const fromUserId = message.from.id;
     const fromUsername = String(fromUserId) === env.BOT_USER_ID
-      ? "trainer"
+      ? "Sixth_Teammate_Bot"
       : (message.from.username ? message.from.username : `User_${fromUserId}`);
     const chatId = message.chat.id;
     const messageId = message.message_id;

@@ -8,7 +8,6 @@ export async function getChatHistory(env, chatId, maxChars = MAX_CHAT_HISTORY_CH
       FROM messages m
       LEFT JOIN messages r ON m.reply_to_message_id = r.message_id AND m.chat_id = r.chat_id
       WHERE m.chat_id = ?
-      AND m.message_text NOT LIKE '/start'
       ORDER BY m.timestamp DESC
     `).bind(chatId).all();
 
@@ -51,11 +50,7 @@ export async function getChatHistory(env, chatId, maxChars = MAX_CHAT_HISTORY_CH
         DELETE FROM messages
         WHERE chat_id = ?
         AND message_id NOT IN (${Array.from(usedMessageIds).map(() => '?').join(',')})
-        AND message_text NOT LIKE '/start'
       `).bind(chatId, ...Array.from(usedMessageIds)).run();
-    } else {
-      // If no messages are used (e.g., all exceed maxChars), keep them for now or handle differently
-      console.log(`No messages used in history for chat ${chatId}, skipping deletion`);
     }
 
     return dialog.join('\n\n');
