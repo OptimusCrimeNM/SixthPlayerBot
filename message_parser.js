@@ -19,6 +19,7 @@ export async function parseAndStoreMessage(env, message) {
     if (message.location) messageContent += "<Attached location>";
     if (message.dice) messageContent += `<Thrown dice to ${message.dice.value}>`;
     if (messageContent.length > 0) messageContent += "\n";
+    if (message.caption) messageContent += message.caption + '\n';
     if (message.text) messageContent += message.text;
   
     if (messageContent.length === 0) {
