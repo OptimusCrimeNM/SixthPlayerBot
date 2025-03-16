@@ -7,6 +7,7 @@ export async function getChatHistory(env, chatId, maxChars = MAX_CHAT_HISTORY_CH
                    m.username,
                    m.message_id,
                    m.reply_to_message_id,
+                   m.timestamp,
                    r.message_text AS reply_to_text,
                    r.username     AS reply_to_username
             FROM messages m
@@ -21,19 +22,30 @@ export async function getChatHistory(env, chatId, maxChars = MAX_CHAT_HISTORY_CH
 
         // Process messages in reverse chronological order, then reverse for natural reading
         for (const row of results.reverse()) {
-            const {message_text, username, message_id, reply_to_message_id, reply_to_text, reply_to_username} = row;
+            const {
+                message_text,
+                username,
+                message_id,
+                reply_to_message_id,
+                timestamp,
+                reply_to_text,
+                reply_to_username
+            } = row;
 
             if (!message_text) continue; // Skip empty messages
 
+            // Format the timestamp (e.g., "2025-03-16 14:30:45")
+            const timecode = new Date(timestamp).toISOString().replace('T', ' ').slice(0, 19);
+
             // Split message_text into lines for formatting
             const lines = message_text.split('\n');
-            let formattedMessage = `${username} writes:\n${lines.join('\n')}`;
+            let formattedMessage = `[${timecode}] ${username} writes:\n${lines.join('\n')}`;
 
             // Add reply context if applicable
             if (reply_to_message_id && reply_to_text && reply_to_username) {
                 const replyLines = reply_to_text.split('\n');
                 const truncatedReply = replyLines[0].length > 20 ? `${replyLines[0].slice(0, 20)}...` : replyLines[0];
-                formattedMessage = `${username} replies to ${reply_to_username} "${truncatedReply}":\n${lines.join('\n')}`;
+                formattedMessage = `[${timecode}] ${username} replies to ${reply_to_username} "${truncatedReply}":\n${lines.join('\n')}`;
             }
 
             // Check character limit
