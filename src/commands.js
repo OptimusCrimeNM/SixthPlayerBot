@@ -1,5 +1,14 @@
 export async function processCommand(env, chatId, text, replyToChat) {
-  if (text.startsWith('/status')) {
+  const ownerUserId = await env.KV.get("OWNER_USER_ID");
+  const isOwner = ownerUserId === chatId;
+  if (isOwner && text.startsWith('/getScript')) {
+    const scriptText = await env.KV.get("AI_REQUEST_SCRIPT");
+    return replyToChat(scriptText ? scriptText : "");
+  } else if (isOwner && text.startsWith('/setScript ')) {
+    const newValue = text.slice('/setScript '.length).trim();
+    await env.KV.set("AI_REQUEST_SCRIPT", newValue);
+    return replyToChat("Script set");
+  } else if (text.startsWith('/status')) {
     const { enabled } = await env.DB.prepare(`
       SELECT enabled FROM chats WHERE chat_id = ?
     `).bind(chatId).first() || { enabled: false };
