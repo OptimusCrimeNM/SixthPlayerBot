@@ -21,8 +21,16 @@ export async function processWithAi(env, chatHistory, replyToChat) {
   const geminiData = await geminiResponse.json();
   const geminiReplyText = geminiData.candidates[0].content.parts[0].text;
   const lines = geminiReplyText.split('\n');
+
   if (lines.length === 0 || lines[0].includes("SKIP")) {
     return new Response('Skipped with no response', { status: 200 });
   }
-  return replyToChat(lines.splice(0, 1).join('\n'), true);
+
+  // Remove the first line (prefix) and send the rest
+  lines.shift(); // Removes the first line
+  const messageContent = lines.join('\n').trim(); // Join remaining lines, remove trailing whitespace
+  if (messageContent) {
+    return replyToChat(messageContent, true);
+  }
+  return new Response('No content to reply', { status: 200 });
 }
