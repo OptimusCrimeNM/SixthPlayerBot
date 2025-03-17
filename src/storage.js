@@ -59,38 +59,32 @@ export async function getChatHistory(env, chatId, maxChars = MAX_CHAT_HISTORY_CH
                 break;
             }
         }
-/*
+
         // Delete up to 10 oldest messages not used in the history
-        if (usedMessageIds.size > 0) {
-            // Fetch all message IDs and timestamps for this chat
-            const allMessages = await env.DB.prepare(`
-                SELECT message_id, timestamp
-                FROM messages
-                WHERE chat_id = ?
-            `).bind(chatId).all();
-
-            // Filter out messages not in usedMessageIds, sort by timestamp (oldest first), and take up to 10
-            const messagesToDelete = allMessages.results
-                .filter(row => !usedMessageIds.has(String(row.message_id))) // Ensure string comparison
-                .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)) // Oldest first (ascending)
-                .slice(0, 10) // Limit to 10
-                .map(row => ({message_id: row.message_id, timestamp: row.timestamp}));
-
-            // Log what’s being deleted
-            console.log(`Messages to delete from chat ${chatId}:`, messagesToDelete);
-
-            // Delete each message individually
-            const deleteStmt = env.DB.prepare(`
+        if (usedMessageIds.size < results.length) {
+            const unusedMessageIds = new Set();
+            let count = results.length - usedMessageIds.size
+            if (count > 10) count = 10;
+            for (let i = 0; i < count; ++i) {
+                const {
+                    message_text,
+                    username,
+                    message_id,
+                    reply_to_message_id,
+                    timestamp,
+                    reply_to_text,
+                    reply_to_username
+                } = results[i];
+                unusedMessageIds.add(String(message_id));
+            }
+            await env.DB.prepare(`
                 DELETE
                 FROM messages
                 WHERE chat_id = ?
-                  AND message_id = ?
-            `);
-            for (const {message_id} of messagesToDelete) {
-                await deleteStmt.bind(chatId, message_id).run();
-            }
+                  AND message_id IN (${Array.from(unusedMessageIds).map(() => '?').join(',')})
+            `).bind(chatId, ...Array.from(unusedMessageIds)).run();
         }
-*/
+
         return dialog.join('\n\n');
     } catch (error) {
         console.error(`Error during history fetching or cleanup: ${error.message}`);
