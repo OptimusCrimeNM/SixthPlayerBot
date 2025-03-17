@@ -50,6 +50,7 @@ export async function processWithAi(env, chatId, replyToChat) {
     }
 
     if (lines) {
+        console.log("AI response:\n" + lines.join('\n'));
         try {
             const replyObject = JSON.parse(lines.join('\n').trim())
             if (replyObject.remove_note) await removeMemoryEntries(env, chatId, replyObject.remove_note);
