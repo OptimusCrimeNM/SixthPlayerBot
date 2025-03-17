@@ -13,7 +13,7 @@ export async function getChatHistory(env, chatId, maxChars = MAX_CHAT_HISTORY_CH
             FROM messages m
                      LEFT JOIN messages r ON m.reply_to_message_id = r.message_id AND m.chat_id = r.chat_id
             WHERE m.chat_id = ?
-            ORDER BY m.timestamp DESC
+            ORDER BY m.timestamp ASC
         `).bind(chatId).all();
 
         let totalChars = 0;
@@ -51,7 +51,7 @@ export async function getChatHistory(env, chatId, maxChars = MAX_CHAT_HISTORY_CH
             // Check character limit
             const messageLength = formattedMessage.length;
             if (totalChars + messageLength <= maxChars) {
-                dialog.push(formattedMessage);
+                dialog.unshift(formattedMessage);
                 totalChars += messageLength + 1; // Add 1 for newline between messages
                 usedMessageIds.add(String(message_id)); // Ensure string type
                 if (reply_to_message_id) usedMessageIds.add(String(reply_to_message_id)); // Ensure string type
