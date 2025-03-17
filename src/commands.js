@@ -39,27 +39,20 @@ export async function processCommand(env, chatId, text, replyToChat) {
             return replyToChat('Value remembered');
         }
         return replyToChat('Value not specified!');
-    } else if (text.startsWith('/forget')) {
-        const valueToForget = text.slice('/forget'.length).trim();
-        const {success} = await env.DB.prepare(`
-            DELETE
-            FROM remembered_context
-            WHERE chat_id = ?
-              AND context_value = ?
-        `).bind(chatId, valueToForget).run();
-        return replyToChat(success ? 'Value forgot' : 'Value not found!');
-    } else if (text.startsWith('/clear')) {
+    } else if (text.startsWith('/drop_memory')) {
         await env.DB.prepare(`
             DELETE
             FROM remembered_context
             WHERE chat_id = ?
         `).bind(chatId).run();
+        return replyToChat('Memory cleared');
+    } else if (text.startsWith('/clear')) {
         await env.DB.prepare(`
             DELETE
             FROM messages
             WHERE chat_id = ?
         `).bind(chatId).run();
-        return replyToChat('Memory cleared');
+        return replyToChat('History cleared');
     }
     return new Response('OK', {status: 200});
 }
