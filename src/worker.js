@@ -30,13 +30,13 @@ export default {
         return new Response('No message found', { status: 200 });
       }
       
-      async function replyToChat(replyText, storeReply = false) {
+      async function replyToChat(replyText, storeReply = false, replyToLatest = false) {
         const botToken = env.TELEGRAM_BOT_TOKEN;
         const telegramApiUrl = `${TELEGRAM_API_BASE_URL}${botToken}/sendMessage`;
         const telegramPayload = {
           chat_id: message.chat.id,
           text: replyText,
-          reply_to_message_id: message.message_id,
+          reply_to_message_id: (replyToLatest ? message.message_id : undefined),
         };
 
         const replyRequest = await fetch(telegramApiUrl, {
