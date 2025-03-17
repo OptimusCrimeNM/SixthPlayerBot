@@ -74,7 +74,7 @@ export async function getChatHistory(env, chatId, maxChars = MAX_CHAT_HISTORY_CH
                     timestamp,
                     reply_to_text,
                     reply_to_username
-                } = results[i];
+                } = results[results.length - 1 - i];
                 unusedMessageIds.add(String(message_id));
             }
             await env.DB.prepare(`
