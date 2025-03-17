@@ -44,8 +44,8 @@ export async function processWithAi(env, chatId, replyToChat) {
     const geminiData = await geminiResponse.json();
     const geminiReplyText = geminiData.candidates[0].content.parts[0].text;
     const lines = geminiReplyText.split('\n');
-    lines.shift();
-    lines.pop();
+    while (!lines[0].includes('{')) lines.shift();
+    while (!lines[lines.length - 1].includes('}')) lines.pop();
 
     try {
         const replyObject = JSON.parse(lines.join('\n').trim())
