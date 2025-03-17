@@ -59,7 +59,7 @@ export async function getChatHistory(env, chatId, maxChars = MAX_CHAT_HISTORY_CH
                 break;
             }
         }
-
+/*
         // Delete up to 10 oldest messages not used in the history
         if (usedMessageIds.size > 0) {
             // Fetch all message IDs and timestamps for this chat
@@ -90,7 +90,7 @@ export async function getChatHistory(env, chatId, maxChars = MAX_CHAT_HISTORY_CH
                 await deleteStmt.bind(chatId, message_id).run();
             }
         }
-
+*/
         return dialog.join('\n\n');
     } catch (error) {
         console.error(`Error during history fetching or cleanup: ${error.message}`);
