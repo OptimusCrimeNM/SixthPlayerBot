@@ -53,8 +53,8 @@ export async function getChatHistory(env, chatId, maxChars = MAX_CHAT_HISTORY_CH
             if (totalChars + messageLength <= maxChars) {
                 dialog.push(formattedMessage);
                 totalChars += messageLength + 1; // Add 1 for newline between messages
-                usedMessageIds.add(message_id); // Track this message as used
-                if (reply_to_message_id) usedMessageIds.add(reply_to_message_id); // Track replied-to message
+                usedMessageIds.add(String(message_id)); // Ensure string type
+                if (reply_to_message_id) usedMessageIds.add(String(reply_to_message_id)); // Ensure string type
             } else {
                 break;
             }
@@ -69,12 +69,15 @@ export async function getChatHistory(env, chatId, maxChars = MAX_CHAT_HISTORY_CH
                 WHERE chat_id = ?
             `).bind(chatId).all();
 
-            // Filter out messages not in usedMessageIds, sort by timestamp, and take up to 10
+            // Filter out messages not in usedMessageIds, sort by timestamp (oldest first), and take up to 10
             const messagesToDelete = allMessages.results
-                .filter(row => !usedMessageIds.has(row.message_id))
-                .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)) // Oldest first
+                .filter(row => !usedMessageIds.has(String(row.message_id))) // Ensure string comparison
+                .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)) // Oldest first (ascending)
                 .slice(0, 10) // Limit to 10
-                .map(row => row.message_id);
+                .map(row => ({message_id: row.message_id, timestamp: row.timestamp}));
+
+            // Log what’s being deleted
+            console.log(`Messages to delete from chat ${chatId}:`, messagesToDelete);
 
             // Delete each message individually
             const deleteStmt = env.DB.prepare(`
@@ -83,8 +86,8 @@ export async function getChatHistory(env, chatId, maxChars = MAX_CHAT_HISTORY_CH
                 WHERE chat_id = ?
                   AND message_id = ?
             `);
-            for (const messageId of messagesToDelete) {
-                await deleteStmt.bind(chatId, messageId).run();
+            for (const {message_id} of messagesToDelete) {
+                await deleteStmt.bind(chatId, message_id).run();
             }
         }
 
