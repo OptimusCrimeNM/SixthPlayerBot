@@ -44,17 +44,21 @@ export async function processWithAi(env, chatId, replyToChat) {
     const geminiData = await geminiResponse.json();
     const geminiReplyText = geminiData.candidates[0].content.parts[0].text;
     const lines = geminiReplyText.split('\n');
-    while (!lines[0].includes('{')) lines.shift();
-    while (!lines[lines.length - 1].includes('}')) lines.pop();
+    if (lines) {
+        while (!lines[0].includes('{')) lines.shift();
+        while (!lines[lines.length - 1].includes('}')) lines.pop();
+    }
 
-    try {
-        const replyObject = JSON.parse(lines.join('\n').trim())
-        if (replyObject.remove_note) await removeMemoryEntries(env, chatId, replyObject.remove_note);
-        if (replyObject.add_note) await addMemoryEntries(env, chatId, replyObject.add_note);
-        if (replyObject.message) return replyToChat(replyObject.message, true);
-    } catch (error) {
-        console.error(`Wrong ai reply format: ${error.message}`);
-        return new Response('Wrong ai reply format', {status: 200});
+    if (lines) {
+        try {
+            const replyObject = JSON.parse(lines.join('\n').trim())
+            if (replyObject.remove_note) await removeMemoryEntries(env, chatId, replyObject.remove_note);
+            if (replyObject.add_note) await addMemoryEntries(env, chatId, replyObject.add_note);
+            if (replyObject.message) return replyToChat(replyObject.message, true);
+        } catch (error) {
+            console.error(`Wrong ai reply format: ${error.message}`);
+            return new Response('Wrong ai reply format', {status: 200});
+        }
     }
     return new Response('No content to reply', {status: 200});
 }
