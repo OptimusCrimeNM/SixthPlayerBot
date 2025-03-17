@@ -60,14 +60,32 @@ export async function getChatHistory(env, chatId, maxChars = MAX_CHAT_HISTORY_CH
             }
         }
 
-        // Delete messages not used in the history
+        // Delete up to 10 oldest messages not used in the history
         if (usedMessageIds.size > 0) {
-            await env.DB.prepare(`
+            // Fetch all message IDs and timestamps for this chat
+            const allMessages = await env.DB.prepare(`
+                SELECT message_id, timestamp
+                FROM messages
+                WHERE chat_id = ?
+            `).bind(chatId).all();
+
+            // Filter out messages not in usedMessageIds, sort by timestamp, and take up to 10
+            const messagesToDelete = allMessages.results
+                .filter(row => !usedMessageIds.has(row.message_id))
+                .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)) // Oldest first
+                .slice(0, 10) // Limit to 10
+                .map(row => row.message_id);
+
+            // Delete each message individually
+            const deleteStmt = env.DB.prepare(`
                 DELETE
                 FROM messages
                 WHERE chat_id = ?
-                  AND message_id NOT IN (${Array.from(usedMessageIds).map(() => '?').join(',')})
-            `).bind(chatId, ...Array.from(usedMessageIds)).run();
+                  AND message_id = ?
+            `);
+            for (const messageId of messagesToDelete) {
+                await deleteStmt.bind(chatId, messageId).run();
+            }
         }
 
         return dialog.join('\n\n');
