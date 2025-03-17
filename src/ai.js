@@ -54,7 +54,10 @@ export async function processWithAi(env, chatId, replyToChat) {
             const replyObject = JSON.parse(lines.join('\n').trim())
             if (replyObject.remove_note) await removeMemoryEntries(env, chatId, replyObject.remove_note);
             if (replyObject.add_note) await addMemoryEntries(env, chatId, replyObject.add_note);
-            if (replyObject.message) return replyToChat(replyObject.message, true);
+            if (replyObject.message) {
+                if (replyObject.message_type == "write") return replyToChat(replyObject.message, true, false);
+                if (replyObject.message_type == "reply") return replyToChat(replyObject.message, true, true);
+            }
         } catch (error) {
             console.error(`Wrong ai reply format: ${error.message}`);
             return new Response('Wrong ai reply format', {status: 200});
