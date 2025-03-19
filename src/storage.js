@@ -101,14 +101,14 @@ export async function getChatMemory(env, chatId) {
             ORDER BY id ASC
         `).bind(chatId).all();
 
-        if (!results || results.length === 0) return "";
+        if (!results || results.length === 0) return [];
 
         // Format memory entries with their note numbers
         const memoryLines = results.map(row => `${row.id}. ${row.context_value}`);
-        return memoryLines.join('\n');
+        return memoryLines;
     } catch (error) {
         console.error(`Error fetching chat memory for chat ${chatId}: ${error.message}`);
-        return "";
+        return [];
     }
 }
 

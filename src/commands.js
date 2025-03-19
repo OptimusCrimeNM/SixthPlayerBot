@@ -20,7 +20,11 @@ export async function processCommand(env, chatId, text, replyToChat) {
             return replyToChat(memoryLines.join('\n'));
         } else if (text.startsWith('/getMemory')) {
             const requiredChatId = text.slice('/getMemory'.length).trim();
-            return replyToChat(getChatMemory(env, requiredChatId));
+            const memoryLines = await getChatMemory(env, requiredChatId);
+            for (let i = 0; i < memoryLines.length / 10; i += 10) {
+                await replyToChat(memoryLines.splice(i * 10, 10).join('\n'));
+            }
+            return new Response('OK', {status: 200});
         }
     }
 

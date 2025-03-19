@@ -27,7 +27,8 @@ export async function processWithAi(env, chatId, replyToChat) {
     if (usersCount) context += `There's ${usersCount} users in the chat.\n`
     if (env.BOT_USERNAME) context += `Your username is "${env.BOT_USERNAME}".\n`
     context += `You are also known as "Sixth player", "Sixth" or "Sixth_Teammate_Bot".\n`
-    if (rememberedContext) context += 'You have notes of important facts you made:\n' + rememberedContext + '\n\n'
+    if (rememberedContext.length) context += 'You have notes of important facts you made:\n'
+        + rememberedContext.join('\n') + '\n\n'
     if (chatHistory) context += 'You have recent chat history:\n' + chatHistory + '\n\n'
 
     const scriptValue = await env.KV.get("AI_REQUEST_SCRIPT");
