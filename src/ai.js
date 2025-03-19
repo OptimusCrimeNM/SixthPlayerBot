@@ -23,17 +23,28 @@ export async function processWithAi(env, chatId, replyToChat) {
 
     const chatHistory = await getChatHistory(env, String(chatId));
     const rememberedContext = await getChatMemory(env, String(chatId));
-    let context = 'You are a participants in a text chat.\n'
-    const usersCount = await getChatMemberCount(env, chatId)
-    if (usersCount) context += `There's ${usersCount} users in the chat.\n`
-    if (env.BOT_USERNAME) context += `Your username is "${env.BOT_USERNAME}".\n`
-    context += `You are also known as "Sixth player", "Sixth" or "Sixth_Teammate_Bot".\n`
-    if (rememberedContext.length) context += 'You have notes of important facts you made:\n'
-        + rememberedContext.join('\n') + '\n\n'
-    if (chatHistory) context += 'You have recent chat history:\n' + chatHistory + '\n\n'
+    let context = 'You are a participants in a text chat.\n';
+    const usersCount = await getChatMemberCount(env, chatId);
+    if (usersCount) context += `There's ${usersCount} users in the chat.\n`;
+    if (env.BOT_USERNAME) context += `Your username is "${env.BOT_USERNAME}".\n`;
+    context += `You are also known as "Sixth player", "Sixth" or "Sixth_Teammate_Bot".\n`;
+    if (rememberedContext.length) {
+        context += 'You have notes of important facts you made:\n';
+        context += '[NOTES BEGIN]\n';
+        context += rememberedContext.join('\n') + '\n';
+        context += '[NOTES END]\n\n';
+    }
+    if (chatHistory) {
+        context += 'You have recent chat history:\n';
+        context += '[HISTORY BEGIN]\n';
+        context += chatHistory + '\n';
+        context += '[HISTORY END]\n\n';
+    }
 
     const scriptValue = await env.KV.get("AI_REQUEST_SCRIPT");
-    if (scriptValue) context += scriptValue
+    if (scriptValue) {
+        context += scriptValue;
+    }
 
     const geminiPayload = {contents: [{parts: [{text: context}]}]};
     const geminiResponse = await fetch(`${GEMINI_API_URL}?key=${geminiApiKey}`, {
