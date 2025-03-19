@@ -1,5 +1,6 @@
 import {GEMINI_API_URL, TELEGRAM_API_BASE_URL} from './constants.js';
 import {addMemoryEntries, getChatHistory, getChatMemory, removeMemoryEntries} from "./storage";
+import {finalize} from "./utils";
 
 export async function getChatMemberCount(env, chatId) {
     const botToken = env.TELEGRAM_BOT_TOKEN;
@@ -62,9 +63,9 @@ export async function processWithAi(env, chatId, replyToChat) {
             }
         } catch (error) {
             console.error(`Wrong ai reply format: ${error.message}`);
-            return new Response('Wrong ai reply format', {status: 200});
+            return await finalize('Wrong ai reply format', {status: 200});
         }
     }
-    return new Response('No content to reply', {status: 200});
+    return await finalize('No content to reply', {status: 200});
 }
 

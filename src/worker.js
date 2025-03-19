@@ -2,21 +2,22 @@ import {processCommand} from './commands.js';
 import {processWithAi} from './ai.js';
 import {parseAndStoreMessage, storeReaction} from './message_parser.js';
 import {TELEGRAM_API_BASE_URL, UNAUTHORIZED_MESSAGE,} from './constants.js';
+import {finalize} from "./utils";
 
 export default {
     async fetch(request, env, ctx) {
         if (request.method !== 'POST') {
-            return new Response('Method not allowed', {status: 405});
+            return await finalize('Method not allowed', {status: 405});
         }
 
         const contentType = request.headers.get('Content-Type');
         if (contentType !== 'application/json') {
-            return new Response('Invalid Content-Type', {status: 400});
+            return await finalize('Invalid Content-Type', {status: 400});
         }
 
         const secretToken = request.headers.get('X-Telegram-Bot-Api-Secret-Token');
         if (env.WEBHOOK_SECRET && secretToken !== env.WEBHOOK_SECRET) {
-            return new Response('Unauthorized', {status: 401});
+            return await finalize('Unauthorized', {status: 401});
         }
 
         try {
@@ -48,7 +49,7 @@ export default {
                         await parseAndStoreMessage(env, sentMessage.result);
                     }
 
-                    return new Response('OK', {status: 200});
+                    return await finalize('OK', {status: 200});
                 }
 
                 const chatId = message.chat.id;
@@ -77,17 +78,17 @@ export default {
                 } else if (chatType === 'private') {
                     return replyToChat(UNAUTHORIZED_MESSAGE);
                 }
-                return new Response('OK', {status: 200});
+                return await finalize('OK', {status: 200});
             }
             const reactionUpdate = update.message_reaction;
             if (reactionUpdate) {
                 await storeReaction(env, reactionUpdate);
-                return new Response('Ok', {status: 200});
+                return await finalize('Ok', {status: 200});
             }
-            return new Response('No message found', {status: 200});
+            return await finalize('No message found', {status: 200});
         } catch (error) {
             console.error(`Error: ${error.message}`);
-            return new Response(`Error: ${error.message}`, {status: 500});
+            return await finalize(`Error: ${error.message}`, {status: 500});
         }
     },
 };

@@ -1,3 +1,5 @@
+import {finalize} from "./utils";
+
 export async function processCommand(env, chatId, text, replyToChat) {
     const ownerUserId = await env.KV.get("OWNER_USER_ID");
     const isOwner = ownerUserId === chatId;
@@ -65,5 +67,5 @@ export async function processCommand(env, chatId, text, replyToChat) {
         `).bind(chatId).run();
         return replyToChat('History cleared');
     }
-    return new Response('OK', {status: 200});
+    return await finalize('OK', {status: 200});
 }
