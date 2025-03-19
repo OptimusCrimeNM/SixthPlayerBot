@@ -15,7 +15,7 @@ export async function processCommand(env, chatId, text, replyToChat) {
             const {results} = await env.DB.prepare(`
                 SELECT chat_id
                 FROM chats
-            `).bind(chatId).all();
+            `).bind().all();
             const memoryLines = results.map(row => `${row.chat_id}`);
             return replyToChat(memoryLines.join('\n'));
         } else if (text.startsWith('/getMemory')) {
