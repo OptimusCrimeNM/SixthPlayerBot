@@ -56,8 +56,8 @@ export async function processWithAi(env, chatId, replyToChat) {
             if (replyObject.remove_note) await removeMemoryEntries(env, chatId, replyObject.remove_note);
             if (replyObject.add_note) await addMemoryEntries(env, chatId, replyObject.add_note);
             if (replyObject.message && replyObject.message_type != "skip") {
-                if (replyObject.message_desire_level > 90) return replyToChat(replyObject.message, true, true);
-                else if (replyObject.message_desire_level > 70) return replyToChat(replyObject.message, true, false);
+                if (replyObject.message_relation_level > 95) return replyToChat(replyObject.message, true, true);
+                else if (replyObject.message_relation_level > 80) return replyToChat(replyObject.message, true, false);
             }
         } catch (error) {
             console.error(`Wrong ai reply format: ${error.message}`);
