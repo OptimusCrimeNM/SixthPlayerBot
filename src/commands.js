@@ -18,11 +18,6 @@ export async function processCommand(env, chatId, text, replyToChat) {
             `).bind().all();
             const memoryLines = results.map(row => `${row.chat_id}`);
             return replyToChat(memoryLines.join('\n'));
-        } else if (text.startsWith('/getMemory')) {
-            const requiredChatId = text.slice('/getMemory'.length).trim();
-            const memoryLines = await getChatMemory(env, requiredChatId);
-            console.log("Memory:\n" + memoryLines.join('\n'));
-            return new Response('OK', {status: 200});
         }
     }
 
