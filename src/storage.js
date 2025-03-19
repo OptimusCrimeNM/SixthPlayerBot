@@ -29,7 +29,6 @@ export async function getChatHistory(env, chatId, maxChars = MAX_CHAT_HISTORY_CH
                 reactionsByMessage[reaction.message_id] = [];
             }
             reactionsByMessage[reaction.message_id].push({
-                user_id: reaction.user_id,
                 reaction: reaction.reaction,
             });
         }
@@ -70,9 +69,9 @@ export async function getChatHistory(env, chatId, maxChars = MAX_CHAT_HISTORY_CH
             const reactions = reactionsByMessage[message_id];
             if (reactions && reactions.length > 0) {
                 const reactionSummary = reactions
-                    .map(r => `${r.reaction} (User_${r.user_id})`)
+                    .map(r => `${r.reaction}`)
                     .join(', ');
-                formattedMessage += `\nReactions: ${reactionSummary}`;
+                formattedMessage += `\n<[Reactions: ${reactionSummary}]>`;
             }
 
             // Check character limit
