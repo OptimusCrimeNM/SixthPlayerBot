@@ -54,7 +54,7 @@ export async function storeReaction(env, reactionUpdate) {
     const chatId = reactionUpdate.chat.id;
     const messageId = reactionUpdate.message_id;
     const userId = reactionUpdate.user.id;
-    const reactions = reactionUpdate.reaction; // Array of { type, emoji } objects
+    const reactions = reactionUpdate.new_reaction; // Array of { type, emoji } objects
 
     try {
         // Check if the message exists in the messages table
