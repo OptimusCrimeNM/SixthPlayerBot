@@ -13,10 +13,10 @@ export async function processCommand(env, chatId, text, replyToChat) {
             return replyToChat("Promt set");
         } else if (text.startsWith('/getChats')) {
             const {results} = await env.DB.prepare(`
-                SELECT id
+                SELECT chat_id
                 FROM chats
             `).bind(chatId).all();
-            const memoryLines = results.map(row => `${row.id}`);
+            const memoryLines = results.map(row => `${row.chat_id}`);
             return replyToChat(memoryLines.join('\n'));
         } else if (text.startsWith('/getMemory')) {
             const requiredChatId = text.slice('/getMemory'.length).trim();
