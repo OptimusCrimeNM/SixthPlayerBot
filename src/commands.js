@@ -21,7 +21,7 @@ export async function processCommand(env, chatId, text, replyToChat) {
         } else if (text.startsWith('/getMemory')) {
             const requiredChatId = text.slice('/getMemory'.length).trim();
             const memoryLines = await getChatMemory(env, requiredChatId);
-            console.log("Memory:\n" + memoryLines);
+            console.log("Memory:\n" + memoryLines.join('\n'));
             return new Response('OK', {status: 200});
         }
     }
