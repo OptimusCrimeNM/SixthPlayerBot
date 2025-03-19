@@ -49,3 +49,43 @@ export async function parseAndStoreMessage(env, message) {
         return false;
     }
 }
+
+export async function storeReaction(env, reactionUpdate) {
+    const chatId = reactionUpdate.chat.id;
+    const messageId = reactionUpdate.message_id;
+    const userId = reactionUpdate.user.id;
+    const reactions = reactionUpdate.reaction; // Array of { type, emoji } objects
+
+    try {
+        // Check if the message exists in the messages table
+        const messageExists = await env.DB.prepare(`
+            SELECT 1
+            FROM messages
+            WHERE chat_id = ?
+              AND message_id = ?
+        `).bind(chatId, messageId).first();
+
+        if (!messageExists) {
+            console.log(`Message ${messageId} in chat ${chatId} not found, skipping reaction storage.`);
+            return false; // Skip storing reactions if the message doesn't exist
+        }
+
+        // Proceed with storing reactions
+        const stmt = env.DB.prepare(`
+            INSERT
+            OR REPLACE INTO message_reactions (chat_id, message_id, user_id, reaction)
+            VALUES (?, ?, ?, ?)
+        `);
+
+        for (const reaction of reactions) {
+            if (reaction.type === 'emoji') {
+                await stmt.bind(chatId, messageId, userId, reaction.emoji).run();
+            }
+        }
+        return true;
+
+    } catch (error) {
+        console.error(`Failed to store reaction for message ${messageId} in chat ${chatId}: ${error.message}`);
+        return false;
+    }
+}

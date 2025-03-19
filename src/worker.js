@@ -1,7 +1,6 @@
 import { processCommand } from './commands.js';
 import { processWithAi } from './ai.js';
-import { getChatHistory } from './storage.js';
-import { parseAndStoreMessage } from './message_parser.js';
+import {parseAndStoreMessage, storeReaction} from './message_parser.js';
 import {
   TELEGRAM_API_BASE_URL,
   UNAUTHORIZED_MESSAGE,
@@ -25,6 +24,13 @@ export default {
 
     try {
       const update = await request.json();
+      const reactionUpdate = update.message_reaction;
+
+      if (reactionUpdate) {
+        await storeReaction(env, reactionUpdate);
+        return new Response('Ok', { status: 200 });
+      }
+
       const message = update.message || update.edited_message;
       if (!message) {
         return new Response('No message found', { status: 200 });

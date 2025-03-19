@@ -16,6 +16,24 @@ export async function getChatHistory(env, chatId, maxChars = MAX_CHAT_HISTORY_CH
             ORDER BY m.timestamp ASC
         `).bind(chatId).all();
 
+        const reactionResults = await env.DB.prepare(`
+            SELECT message_id, user_id, reaction
+            FROM message_reactions
+            WHERE chat_id = ?
+        `).bind(chatId).all();
+
+        // Group reactions by message_id
+        const reactionsByMessage = {};
+        for (const reaction of reactionResults.results || []) {
+            if (!reactionsByMessage[reaction.message_id]) {
+                reactionsByMessage[reaction.message_id] = [];
+            }
+            reactionsByMessage[reaction.message_id].push({
+                user_id: reaction.user_id,
+                reaction: reaction.reaction,
+            });
+        }
+
         let totalChars = 0;
         const dialog = [];
         const usedMessageIds = new Set(); // Track message IDs used in history
@@ -48,6 +66,15 @@ export async function getChatHistory(env, chatId, maxChars = MAX_CHAT_HISTORY_CH
                 formattedMessage = `[${timecode}] ${username} replies to ${reply_to_username} "${truncatedReply}":\n${lines.join('\n')}`;
             }
 
+            // Append reactions if they exist
+            const reactions = reactionsByMessage[message_id];
+            if (reactions && reactions.length > 0) {
+                const reactionSummary = reactions
+                    .map(r => `${r.reaction} (User_${r.user_id})`)
+                    .join(', ');
+                formattedMessage += `\nReactions: ${reactionSummary}`;
+            }
+
             // Check character limit
             const messageLength = formattedMessage.length;
             if (totalChars + messageLength <= maxChars) {
@@ -63,18 +90,10 @@ export async function getChatHistory(env, chatId, maxChars = MAX_CHAT_HISTORY_CH
         // Delete up to 10 oldest messages not used in the history
         if (usedMessageIds.size < results.length) {
             const unusedMessageIds = new Set();
-            let count = results.length - usedMessageIds.size
+            let count = results.length - usedMessageIds.size;
             if (count > 10) count = 10;
             for (let i = 0; i < count; ++i) {
-                const {
-                    message_text,
-                    username,
-                    message_id,
-                    reply_to_message_id,
-                    timestamp,
-                    reply_to_text,
-                    reply_to_username
-                } = results[results.length - 1 - i];
+                const {message_id} = results[results.length - 1 - i];
                 unusedMessageIds.add(String(message_id));
             }
             await env.DB.prepare(`

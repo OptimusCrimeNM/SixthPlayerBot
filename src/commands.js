@@ -1,5 +1,3 @@
-import {getChatMemory} from "./storage";
-
 export async function processCommand(env, chatId, text, replyToChat) {
     const ownerUserId = await env.KV.get("OWNER_USER_ID");
     const isOwner = ownerUserId === chatId;
