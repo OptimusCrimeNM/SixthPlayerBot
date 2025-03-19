@@ -1,14 +1,30 @@
+import {getChatMemory} from "./storage";
+
 export async function processCommand(env, chatId, text, replyToChat) {
     const ownerUserId = await env.KV.get("OWNER_USER_ID");
     const isOwner = ownerUserId === chatId;
-    if (isOwner && text.startsWith('/getPromt')) {
-        const scriptText = await env.KV.get("AI_REQUEST_SCRIPT");
-        return replyToChat(scriptText ? scriptText : "");
-    } else if (isOwner && text.startsWith('/setPromt')) {
-        const newValue = text.slice('/setPromt'.length).trim();
-        await env.KV.put("AI_REQUEST_SCRIPT", newValue);
-        return replyToChat("Promt set");
-    } else if (text.startsWith('/status')) {
+    if (isOwner) {
+        if (text.startsWith('/getPromt')) {
+            const scriptText = await env.KV.get("AI_REQUEST_SCRIPT");
+            return replyToChat(scriptText ? scriptText : "");
+        } else if (text.startsWith('/setPromt')) {
+            const newValue = text.slice('/setPromt'.length).trim();
+            await env.KV.put("AI_REQUEST_SCRIPT", newValue);
+            return replyToChat("Promt set");
+        } else if (text.startsWith('/getChats')) {
+            const {results} = await env.DB.prepare(`
+                SELECT id
+                FROM chats
+            `).bind(chatId).all();
+            const memoryLines = results.map(row => `${row.id}`);
+            return replyToChat(memoryLines.join('\n'));
+        } else if (text.startsWith('/getMemory')) {
+            const requiredChatId = text.slice('/getMemory'.length).trim();
+            return replyToChat(getChatMemory(env, requiredChatId));
+        }
+    }
+
+    if (text.startsWith('/status')) {
         const {enabled} = await env.DB.prepare(`
             SELECT enabled
             FROM chats
