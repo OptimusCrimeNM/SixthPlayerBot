@@ -34,7 +34,7 @@ export async function getChatHistory(env, chatId, maxChars = MAX_CHAT_HISTORY_CH
         }
 
         let totalChars = 0;
-        const dialog = [];
+        let dialog = [];
         const usedMessageIds = new Set(); // Track message IDs used in history
 
         // Process messages in reverse chronological order, then reverse for natural reading
@@ -102,7 +102,7 @@ export async function getChatHistory(env, chatId, maxChars = MAX_CHAT_HISTORY_CH
                   AND message_id IN (${Array.from(unusedMessageIds).map(() => '?').join(',')})
             `).bind(chatId, ...Array.from(unusedMessageIds)).run();
         }
-
+        dialog.reverse();
         return dialog.join('\n\n');
     } catch (error) {
         console.error(`Error during history fetching or cleanup: ${error.message}`);
