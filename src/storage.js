@@ -13,7 +13,7 @@ export async function getChatHistory(env, chatId, maxChars = MAX_CHAT_HISTORY_CH
             FROM messages m
                      LEFT JOIN messages r ON m.reply_to_message_id = r.message_id AND m.chat_id = r.chat_id
             WHERE m.chat_id = ?
-            ORDER BY m.timestamp ASC
+            ORDER BY m.timestamp DESC
         `).bind(chatId).all();
 
         const reactionResults = await env.DB.prepare(`
@@ -38,7 +38,7 @@ export async function getChatHistory(env, chatId, maxChars = MAX_CHAT_HISTORY_CH
         const usedMessageIds = new Set(); // Track message IDs used in history
 
         // Process messages in reverse chronological order, then reverse for natural reading
-        for (const row of results.reverse()) {
+        for (let i = 0; i < results.length; ++i) {
             const {
                 message_text,
                 username,
@@ -47,7 +47,7 @@ export async function getChatHistory(env, chatId, maxChars = MAX_CHAT_HISTORY_CH
                 timestamp,
                 reply_to_text,
                 reply_to_username
-            } = row;
+            } = results[i];
 
             if (!message_text) continue; // Skip empty messages
 
