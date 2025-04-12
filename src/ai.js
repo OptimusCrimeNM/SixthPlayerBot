@@ -33,7 +33,7 @@ export async function getFileLink(env, fileId) {
             return undefined;
         }
 
-        return `${TELEGRAM_API_BASE_URL}${botToken}/${data.result.file_path}`;
+        return `https://api.telegram.org/file/bot${botToken}/${data.result.file_path}`;
     } catch (error) {
         console.error(`Error fetching file link for file_id ${fileId}: ${error.message}`);
         return undefined;
@@ -54,9 +54,13 @@ export async function processPhoto(env, photo) {
             return "Couldn't process photo";
         }
 
-        // Convert photo to base64 for Gemini API
+        // Convert photo to base64
         const photoBuffer = await photoResponse.arrayBuffer();
-        const photoBase64 = Buffer.from(photoBuffer).toString('base64');
+        const photoArray = new Uint8Array(photoBuffer);
+        const binaryString = Array.from(photoArray)
+            .map(byte => String.fromCharCode(byte))
+            .join('');
+        const photoBase64 = btoa(binaryString);
 
         // Call Gemini API to describe the photo
         const geminiApiKey = env.GEMINI_API_KEY;

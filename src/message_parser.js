@@ -16,7 +16,8 @@ export async function parseAndStoreMessage(env, message) {
     if (message.sticker) messageContent += "<Sent sticker>";
     if (message.document) messageContent += "<Attached document>";
     if (message.photo) {
-        const photoDescription = await processPhoto(env, findBestPhotoSize(message.photo));
+        const photoSize = findBestPhotoSize(env, message.photo)
+        const photoDescription = await processPhoto(env, photoSize);
         messageContent += `<Attached photo: ${photoDescription}>`;
     }
     if (message.voice) messageContent += "<Attached voice message>";
