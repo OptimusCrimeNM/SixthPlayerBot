@@ -23,7 +23,7 @@ export async function getChatHistory(env, chatId, maxChars = MAX_CHAT_HISTORY_CH
         `).bind(chatId).all();
 
         // Group reactions by message_id
-        const reactionsByMessage = {};
+        let reactionsByMessage = {};
         for (const reaction of reactionResults.results || []) {
             if (!reactionsByMessage[reaction.message_id]) {
                 reactionsByMessage[reaction.message_id] = [];
@@ -35,7 +35,7 @@ export async function getChatHistory(env, chatId, maxChars = MAX_CHAT_HISTORY_CH
 
         let totalChars = 0;
         let dialog = [];
-        const usedMessageIds = new Set(); // Track message IDs used in history
+        let usedMessageIds = new Set(); // Track message IDs used in history
 
         // Process messages in reverse chronological order, then reverse for natural reading
         for (let i = 0; i < results.length; ++i) {
@@ -88,7 +88,7 @@ export async function getChatHistory(env, chatId, maxChars = MAX_CHAT_HISTORY_CH
 
         // Delete up to 10 oldest messages not used in the history
         if (usedMessageIds.size < results.length) {
-            const unusedMessageIds = new Set();
+            let unusedMessageIds = new Set();
             let count = results.length - usedMessageIds.size;
             if (count > 10) count = 10;
             for (let i = 0; i < count; ++i) {
@@ -122,7 +122,7 @@ export async function getChatMemory(env, chatId) {
         if (!results || results.length === 0) return [];
 
         // Format memory entries with their note numbers
-        const memoryLines = results.map(row => `${row.id}. ${row.context_value}`);
+        const memoryLines = results.map(row => `${row.context_value}`);
         return memoryLines;
     } catch (error) {
         console.error(`Error fetching chat memory for chat ${chatId}: ${error.message}`);

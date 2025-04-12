@@ -1,3 +1,6 @@
+import {findBestPhotoSize} from "./utils";
+import {processPhoto} from "./ai";
+
 export async function parseAndStoreMessage(env, message) {
     const fromUserId = message.from.id;
     const fromUsername = (String(fromUserId) === env.BOT_USER_ID && env.BOT_USERNAME)
@@ -12,7 +15,10 @@ export async function parseAndStoreMessage(env, message) {
     if (message.animation) messageContent += "<Attached animation>";
     if (message.sticker) messageContent += "<Sent sticker>";
     if (message.document) messageContent += "<Attached document>";
-    if (message.photo) messageContent += "<Attached photo>";
+    if (message.photo) {
+        const photoDescription = await processPhoto(env, findBestPhotoSize(message.photo));
+        messageContent += `<Attached photo: ${photoDescription}>`;
+    }
     if (message.voice) messageContent += "<Attached voice message>";
     if (message.poll) messageContent += "<Created poll>";
     if (message.location) messageContent += "<Attached location>";
