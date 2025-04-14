@@ -68,7 +68,7 @@ export async function processPhoto(env, photo) {
             contents: [
                 {
                     parts: [
-                        { text: "Describe this image in a concise sentence." },
+                        { text: "Describe this image. If it's funny, explain concisely the joke." },
                         {
                             inline_data: {
                                 mime_type: "image/jpeg", // Adjust if needed (e.g., image/png)
