@@ -127,6 +127,7 @@ export async function processWithAi(env, chatId, replyToChat) {
     }
 
     const geminiPayload = {contents: [{parts: [{text: context}]}]};
+    console.log(`AI payload:\n${geminiPayload}`);
     const geminiResponse = await fetch(`${GEMINI_API_URL}?key=${env.GEMINI_API_KEY}`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -141,9 +142,9 @@ export async function processWithAi(env, chatId, replyToChat) {
         while (!lines[0].includes('{')) lines.shift();
         while (!lines[lines.length - 1].includes('}')) lines.pop();
     }
+    console.log(`AI response:\n${geminiData}`);
 
     if (lines) {
-        console.log("AI response:\n" + lines.join('\n'));
         try {
             const replyObject = JSON.parse(lines.join('\n').trim())
             if (replyObject.add_note) await addMemoryEntries(env, chatId, replyObject.add_note);
@@ -153,6 +154,7 @@ export async function processWithAi(env, chatId, replyToChat) {
             }
         } catch (error) {
             console.error(`Wrong ai reply format: ${error.message}`);
+            console.info(`AI reply:\n${geminiData}`);
             return await finalize('Wrong ai reply format', {status: 200});
         }
     }
