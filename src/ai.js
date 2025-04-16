@@ -149,8 +149,12 @@ export async function processWithAi(env, chatId, replyToChat) {
             const replyObject = JSON.parse(lines.join('\n').trim())
             if (replyObject.add_note) await addMemoryEntries(env, chatId, replyObject.add_note);
             if (replyObject.message && replyObject.message_type != "skip") {
-                if (replyObject.message_direct_refer > 90) return replyToChat(replyObject.message, true, true);
-                else if (replyObject.message_direct_refer > 80) return replyToChat(replyObject.message, true, false);
+                const limitSensMessage = parseInt(await env.KV.get("LIMIT_SENS_MESSAGE"));
+                const limitSensMessageWithReply = parseInt(await env.KV.get("LIMIT_SENS_MESSAGE_REPLY"));
+                if (replyObject.message_direct_refer > limitSensMessage)
+                    return replyToChat(replyObject.message, true, true);
+                else if (replyObject.message_direct_refer > limitSensMessageWithReply)
+                    return replyToChat(replyObject.message, true, false);
             }
         } catch (error) {
             console.error(`Wrong ai reply format: ${error.message}`);
