@@ -127,7 +127,7 @@ export async function processWithAi(env, chatId, replyToChat) {
     }
 
     const geminiPayload = {contents: [{parts: [{text: context}]}]};
-    console.log(`AI payload:\n${geminiPayload}`);
+    console.log(`AI payload:\n` + JSON.stringify(geminiPayload));
     const geminiResponse = await fetch(`${GEMINI_API_URL}?key=${env.GEMINI_API_KEY}`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -142,7 +142,7 @@ export async function processWithAi(env, chatId, replyToChat) {
         while (!lines[0].includes('{')) lines.shift();
         while (!lines[lines.length - 1].includes('}')) lines.pop();
     }
-    console.log(`AI response:\n${geminiData}`);
+    console.log(`AI response:\n` + JSON.stringify(geminiData));
 
     if (lines) {
         try {
