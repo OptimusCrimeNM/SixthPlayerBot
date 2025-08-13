@@ -40,6 +40,67 @@ export async function getFileLink(env, fileId) {
     }
 }
 
+export async function processVoice(env, voice) {
+    if (!voice || !voice.file_id) return "Couldn't process voice";
+
+    const fileLink = await getFileLink(env, voice.file_id);
+    if (!fileLink) return "Couldn't process voice";
+
+    try {
+        const voiceResponse = await fetch(fileLink);
+        if (!voiceResponse.ok) {
+            console.error(`Failed to fetch photo from ${fileLink}: ${voiceResponse.status}`);
+            return "Couldn't process photo";
+        }
+
+        // Convert voice to base64
+        const voiceBuffer = await voiceResponse.arrayBuffer();
+        const voiceArray = new Uint8Array(voiceBuffer);
+        const binaryString = Array.from(voiceArray)
+            .map(byte => String.fromCharCode(byte))
+            .join('');
+        const voiceBase64 = btoa(binaryString);
+
+        // Call Gemini API to describe the photo
+        const geminiApiKey = env.GEMINI_API_KEY;
+        const geminiPayload = {
+            contents: [
+                {
+                    parts: [
+                        { text: "Transcript the voice audio, only the transcription is required." },
+                        {
+                            inline_data: {
+                                mime_type: voice.mime_type
+                                data: voiceBase64
+                            }
+                        }
+                    ]
+                }
+            ]
+        };
+
+        const geminiResponse = await fetch(`${GEMINI_API_URL}?key=${geminiApiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(geminiPayload)
+        });
+
+        if (!geminiResponse.ok) {
+            console.error(`Gemini API error: ${geminiResponse.status}`);
+            return "Couldn't transcript voice";
+        }
+
+        const geminiData = await geminiResponse.json();
+        const transcription = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "No transcription available";
+
+        return transcription;
+
+    } catch (error) {
+        console.error(`Error processing voice: ${error.message}`);
+        return "Couldn't process voice";
+    }
+}
+
 export async function processPhoto(env, photo) {
     if (!photo || !photo.file_id) return "Couldn't process photo";
 
