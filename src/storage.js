@@ -35,7 +35,7 @@ export async function getChatHistory(env, chatId, maxChars = MAX_CHAT_HISTORY_CH
 
         let totalChars = 0;
         let dialog = [];
-        let usedMessageIds = new Set(); // Track message IDs used in history
+        let usedMessageIds = new Set();
 
         // Process messages in reverse chronological order, then reverse for natural reading
         for (let i = 0; i < results.length; ++i) {
@@ -49,7 +49,7 @@ export async function getChatHistory(env, chatId, maxChars = MAX_CHAT_HISTORY_CH
                 reply_to_username
             } = results[i];
 
-            if (!message_text) continue; // Skip empty messages
+            if (!message_text) continue;
 
             // Format the timestamp (e.g., "2025-03-16 14:30:45")
             const timecode = new Date(timestamp).toISOString().replace('T', ' ').slice(0, 19);
@@ -78,9 +78,9 @@ export async function getChatHistory(env, chatId, maxChars = MAX_CHAT_HISTORY_CH
             const messageLength = formattedMessage.length;
             if (totalChars + messageLength <= maxChars) {
                 dialog.unshift(formattedMessage);
-                totalChars += messageLength + 1; // Add 1 for newline between messages
-                usedMessageIds.add(String(message_id)); // Ensure string type
-                if (reply_to_message_id) usedMessageIds.add(String(reply_to_message_id)); // Ensure string type
+                totalChars += messageLength + 1;
+                usedMessageIds.add(String(message_id));
+                if (reply_to_message_id) usedMessageIds.add(String(reply_to_message_id));
             } else {
                 break;
             }
@@ -121,7 +121,7 @@ export async function getChatMemory(env, chatId) {
         if (!results || results.length === 0) return [];
 
         // Format memory entries with their note numbers
-        const memoryLines = results.map(row => `${row.context_value}`);
+        const memoryLines = results.map(row => row.context_value);
         return memoryLines;
     } catch (error) {
         console.error(`Error fetching chat memory for chat ${chatId}: ${error.message}`);
@@ -129,19 +129,18 @@ export async function getChatMemory(env, chatId) {
     }
 }
 
-export async function removeMemoryEntries(env, chatId, entryNumbers) {
-    if (!Array.isArray(entryNumbers) || entryNumbers.length === 0) return;
+export async function removeMemoryEntries(env, chatId, note) {
+    if (!note || typeof note !== 'string' || !note.trim()) return;
 
     try {
-        const placeholders = entryNumbers.map(() => '?').join(',');
         await env.DB.prepare(`
             DELETE
             FROM remembered_context
             WHERE chat_id = ?
-              AND id IN (${placeholders})
-        `).bind(chatId, ...entryNumbers).run();
+              AND context_value = ?
+        `).bind(chatId, note.trim()).run();
     } catch (error) {
-        console.error(`Error removing memory entries for chat ${chatId}: ${error.message}`);
+        console.error(`Error removing memory entry for chat ${chatId}: ${error.message}`);
     }
 }
 

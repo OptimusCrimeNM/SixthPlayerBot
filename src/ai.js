@@ -1,4 +1,4 @@
-import {GEMINI_API_URL, TELEGRAM_API_BASE_URL} from './constants.js';
+import {GEMINI_API_URL, TELEGRAM_API_BASE_URL} from './constants';
 import {addMemoryEntries, getChatHistory, getChatMemory, removeMemoryEntries} from "./storage";
 import {finalize} from "./utils";
 
@@ -15,7 +15,7 @@ export async function getChatMemberCount(env, chatId) {
     }
 
     const data = await response.json();
-    return data.result; // Returns the integer count
+    return data.result;
 }
 
 export async function getFileLink(env, fileId) {
@@ -23,7 +23,7 @@ export async function getFileLink(env, fileId) {
     const url = `${TELEGRAM_API_BASE_URL}${botToken}/getFile?file_id=${fileId}`;
 
     try {
-        const response = await fetch(url, { method: 'GET' });
+        const response = await fetch(url, {method: 'GET'});
         if (!response.ok) {
             return undefined;
         }
@@ -49,11 +49,10 @@ export async function processVoice(env, voice) {
     try {
         const voiceResponse = await fetch(fileLink);
         if (!voiceResponse.ok) {
-            console.error(`Failed to fetch photo from ${fileLink}: ${voiceResponse.status}`);
-            return "Couldn't process photo";
+            console.error(`Failed to fetch voice from ${fileLink}: ${voiceResponse.status}`);
+            return "Couldn't process voice";
         }
 
-        // Convert voice to base64
         const voiceBuffer = await voiceResponse.arrayBuffer();
         const voiceArray = new Uint8Array(voiceBuffer);
         const binaryString = Array.from(voiceArray)
@@ -61,13 +60,12 @@ export async function processVoice(env, voice) {
             .join('');
         const voiceBase64 = btoa(binaryString);
 
-        // Call Gemini API to describe the photo
         const geminiApiKey = env.GEMINI_API_KEY;
         const geminiPayload = {
             contents: [
                 {
                     parts: [
-                        { text: "Transcript the voice audio, only the transcription is required." },
+                        {text: "Transcript the voice audio, only the transcription is required."},
                         {
                             inline_data: {
                                 mime_type: voice.mime_type,
@@ -81,7 +79,7 @@ export async function processVoice(env, voice) {
 
         const geminiResponse = await fetch(`${GEMINI_API_URL}?key=${geminiApiKey}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(geminiPayload)
         });
 
@@ -94,7 +92,6 @@ export async function processVoice(env, voice) {
         const transcription = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "No transcription available";
 
         return transcription;
-
     } catch (error) {
         console.error(`Error processing voice: ${error.message}`);
         return "Couldn't process voice";
@@ -108,14 +105,12 @@ export async function processPhoto(env, photo) {
     if (!fileLink) return "Couldn't process photo";
 
     try {
-        // Fetch the photo file
         const photoResponse = await fetch(fileLink);
         if (!photoResponse.ok) {
             console.error(`Failed to fetch photo from ${fileLink}: ${photoResponse.status}`);
             return "Couldn't process photo";
         }
 
-        // Convert photo to base64
         const photoBuffer = await photoResponse.arrayBuffer();
         const photoArray = new Uint8Array(photoBuffer);
         const binaryString = Array.from(photoArray)
@@ -123,16 +118,15 @@ export async function processPhoto(env, photo) {
             .join('');
         const photoBase64 = btoa(binaryString);
 
-        // Call Gemini API to describe the photo
         const geminiApiKey = env.GEMINI_API_KEY;
         const geminiPayload = {
             contents: [
                 {
                     parts: [
-                        { text: "Describe this image. If it's funny, explain concisely the joke." },
+                        {text: "Describe this image. If it's funny, explain concisely the joke."},
                         {
                             inline_data: {
-                                mime_type: "image/jpeg", // Adjust if needed (e.g., image/png)
+                                mime_type: "image/jpeg",
                                 data: photoBase64
                             }
                         }
@@ -143,7 +137,7 @@ export async function processPhoto(env, photo) {
 
         const geminiResponse = await fetch(`${GEMINI_API_URL}?key=${geminiApiKey}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(geminiPayload)
         });
 
@@ -167,12 +161,12 @@ export async function processWithAi(env, chatId, replyToChat) {
     const rememberedContext = await getChatMemory(env, String(chatId));
     let context = 'You are a participant in a text chat.\n';
     const usersCount = await getChatMemberCount(env, chatId);
-    if (usersCount) context += `There're ${usersCount} users in the chat.\n`;
+    if (usersCount) context += `There are ${usersCount} users in the chat.\n`;
     if (env.BOT_USERNAME) context += `Your username is "${env.BOT_USERNAME}".\n`;
-    context += `You are also known as "Trainer", "Sixth player" or "Sixth".\n`;
+    context += `You are also known as "Trainer", "Sixth player", or "Sixth".\n`;
     const scriptValue = await env.KV.get("AI_REQUEST_SCRIPT");
     if (scriptValue) {
-        context += scriptValue;
+        context += scriptValue + '\n';
     }
     if (rememberedContext.length) {
         context += 'You have notes of important facts you made:\n';
@@ -186,43 +180,64 @@ export async function processWithAi(env, chatId, replyToChat) {
         context += chatHistory + '\n';
         context += '[HISTORY END]\n\n';
     }
+    context += 'Respond with a JSON object containing: message (string, the message to send or empty if no reply), message_type (string, set to "skip" to skip sending), message_direct_refer (number, sensitivity score for reply behavior), add_note (string, optional note to add to context), remove_note (string, optional note to remove from context).';
 
-    const geminiPayload = {contents: [{parts: [{text: context}]}]};
-    console.log(`AI payload:\n` + JSON.stringify(geminiPayload));
+    const geminiPayload = {
+        contents: [{parts: [{text: context}]}],
+        generationConfig: {
+            response_mime_type: 'application/json',
+            response_schema: {
+                type: 'object',
+                properties: {
+                    message: {type: 'string'},
+                    message_type: {type: 'string'},
+                    message_direct_refer: {type: 'number'},
+                    add_note: {type: 'string', nullable: true},
+                    remove_note: {type: 'string', nullable: true}
+                },
+                required: ['message', 'message_type', 'message_direct_refer']
+            }
+        }
+    };
+
+    console.log(`AI payload:\n${JSON.stringify(geminiPayload, null, 2)}`);
+
     const geminiResponse = await fetch(`${GEMINI_API_URL}?key=${env.GEMINI_API_KEY}`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(geminiPayload),
+        body: JSON.stringify(geminiPayload)
     });
 
-    if (!geminiResponse.ok) throw new Error(`Gemini API error: ${geminiResponse.status}`);
+    if (!geminiResponse.ok) {
+        throw new Error(`Gemini API error: ${geminiResponse.status}`);
+    }
+
     const geminiData = await geminiResponse.json();
-    const geminiReplyText = geminiData.candidates[0].content.parts[0].text;
-    const lines = geminiReplyText.split('\n');
-    if (lines) {
-        while (!lines[0].includes('{')) lines.shift();
-        while (!lines[lines.length - 1].includes('}')) lines.pop();
-    }
-    console.log(`AI response:\n` + JSON.stringify(geminiData));
+    const replyObject = geminiData.candidates[0].content.parts[0].text;
 
-    if (lines) {
-        try {
-            const replyObject = JSON.parse(lines.join('\n').trim())
-            if (replyObject.add_note) await addMemoryEntries(env, chatId, replyObject.add_note);
-            if (replyObject.message && replyObject.message_type != "skip") {
-                const limitSensMessage = parseInt(await env.KV.get("LIMIT_SENS_MESSAGE"));
-                const limitSensMessageWithReply = parseInt(await env.KV.get("LIMIT_SENS_MESSAGE_REPLY"));
-                if (replyObject.message_direct_refer > limitSensMessage)
-                    return replyToChat(replyObject.message, true, true);
-                else if (replyObject.message_direct_refer > limitSensMessageWithReply)
-                    return replyToChat(replyObject.message, true, false);
-            }
-        } catch (error) {
-            console.error(`Wrong ai reply format: ${error.message}`);
-            console.info(`AI reply:\n${geminiData}`);
-            return await finalize('Wrong ai reply format', {status: 200});
+    console.log(`AI response:\n${JSON.stringify(replyObject, null, 2)}`);
+
+    try {
+        // replyObject is already a JSON object, no parsing needed
+        if (replyObject.add_note) {
+            await addMemoryEntries(env, chatId, replyObject.add_note);
         }
+        if (replyObject.remove_note) {
+            await removeMemoryEntries(env, chatId, replyObject.remove_note);
+        }
+        if (replyObject.message && replyObject.message_type !== "skip") {
+            const limitSensMessage = parseInt(await env.KV.get("LIMIT_SENS_MESSAGE")) || 90;
+            const limitSensMessageWithReply = parseInt(await env.KV.get("LIMIT_SENS_MESSAGE_REPLY")) || 50;
+            if (replyObject.message_direct_refer > limitSensMessage) {
+                return replyToChat(replyObject.message, true, true);
+            } else if (replyObject.message_direct_refer > limitSensMessageWithReply) {
+                return replyToChat(replyObject.message, true, false);
+            }
+        }
+        return await finalize('No content to reply', {status: 200});
+    } catch (error) {
+        console.error(`Error processing AI response: ${error.message}`);
+        console.info(`AI response:\n${JSON.stringify(geminiData, null, 2)}`);
+        return await finalize('Error processing AI response', {status: 200});
     }
-    return await finalize('No content to reply', {status: 200});
 }
-
