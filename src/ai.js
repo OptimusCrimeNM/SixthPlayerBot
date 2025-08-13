@@ -213,12 +213,18 @@ export async function processWithAi(env, chatId, replyToChat) {
     }
 
     const geminiData = await geminiResponse.json();
-    const replyObject = geminiData.candidates[0].content.parts[0].text;
+    let replyObject;
+    try {
+        replyObject = JSON.parse(geminiData.candidates[0].content.parts[0].text);
+    } catch (error) {
+        console.error(`Failed to parse Gemini JSON response: ${error.message}`);
+        console.info(`Raw Gemini response:\n${JSON.stringify(geminiData, null, 2)}`);
+        return await finalize('Failed to parse AI response', {status: 200});
+    }
 
-    console.log(`AI response:\n${JSON.stringify(replyObject, null, 2)}`);
+    console.log(`Parsed AI response:\n${JSON.stringify(replyObject, null, 2)}`);
 
     try {
-        // replyObject is already a JSON object, no parsing needed
         if (replyObject.add_note) {
             await addMemoryEntries(env, chatId, replyObject.add_note);
         }
@@ -237,7 +243,7 @@ export async function processWithAi(env, chatId, replyToChat) {
         return await finalize('No content to reply', {status: 200});
     } catch (error) {
         console.error(`Error processing AI response: ${error.message}`);
-        console.info(`AI response:\n${JSON.stringify(geminiData, null, 2)}`);
+        console.info(`Parsed AI response:\n${JSON.stringify(replyObject, null, 2)}`);
         return await finalize('Error processing AI response', {status: 200});
     }
 }
