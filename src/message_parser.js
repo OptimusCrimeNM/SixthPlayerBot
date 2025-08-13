@@ -21,7 +21,7 @@ export async function parseAndStoreMessage(env, message) {
         messageContent += `<Attached photo: ${photoDescription}>`;
     }
     if (message.voice) {
-        const voiceTranscription = await processVoice(env, voice);
+        const voiceTranscription = await processVoice(env, message.voice);
         messageContent += `<Attached voice message: ${voiceTranscription}>`;
     }
     if (message.poll) messageContent += "<Created poll>";
