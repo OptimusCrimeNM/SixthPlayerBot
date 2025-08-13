@@ -1,5 +1,5 @@
 import {findBestPhotoSize} from "./utils";
-import {processPhoto} from "./ai";
+import {processPhoto, processVoice} from "./ai";
 
 export async function parseAndStoreMessage(env, message) {
     const fromUserId = message.from.id;
@@ -20,7 +20,10 @@ export async function parseAndStoreMessage(env, message) {
         const photoDescription = await processPhoto(env, photoSize);
         messageContent += `<Attached photo: ${photoDescription}>`;
     }
-    if (message.voice) messageContent += "<Attached voice message>";
+    if (message.voice) {
+        const voiceTranscription = await processVoice(env, voice);
+        messageContent += `<Attached voice message: ${voiceTranscription}>`;
+    }
     if (message.poll) messageContent += "<Created poll>";
     if (message.location) messageContent += "<Attached location>";
     if (message.dice) messageContent += `<Thrown dice to ${message.dice.value}>`;
