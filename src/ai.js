@@ -70,7 +70,7 @@ export async function processVoice(env, voice) {
                         { text: "Transcript the voice audio, only the transcription is required." },
                         {
                             inline_data: {
-                                mime_type: voice.mime_type
+                                mime_type: voice.mime_type,
                                 data: voiceBase64
                             }
                         }
