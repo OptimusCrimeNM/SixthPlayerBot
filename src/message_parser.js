@@ -49,11 +49,11 @@ export async function parseAndStoreMessage(env, message) {
                 INSERT INTO messages (chat_id, user_id, username, message_text, message_id, reply_to_message_id)
                 VALUES (?, ?, ?, ?, ?, ?)
             `).bind(chatId, fromUserId, fromUsername, messageContent, messageId, repliedMessageId).run();
+            return true;
         } else {
             console.log(`Message ${messageId} in chat ${chatId} already exists, skipping.`);
+            return false;
         }
-
-        return true;
     } catch (error) {
         console.error(`Failed to store message ${messageId} in chat ${chatId}: ${error.message}`);
         return false;
