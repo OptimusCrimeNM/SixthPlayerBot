@@ -180,7 +180,7 @@ export async function processWithAi(env, chatId, replyToChat) {
         context += chatHistory + '\n';
         context += '[HISTORY END]\n\n';
     }
-    context += 'Respond with a JSON object containing: message (string, the message to send or empty if no reply), message_type (string, set to "skip" to skip sending), message_direct_refer (number, sensitivity score for reply behavior), add_note (string, optional note to add to context), remove_note (string, optional note to remove from context).';
+    context += 'Respond with a JSON object containing: message (string, the message to send or empty if no reply, use \\n for line breaks to create multi-line messages when appropriate), message_type (string, set to "skip" to skip sending), message_direct_refer (number, sensitivity score for reply behavior), add_note (string, optional note to add to context), remove_note (string, optional note to remove from context).';
 
     const geminiPayload = {
         contents: [{parts: [{text: context}]}],
